@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: storyspark
+      POSTGRES_PASSWORD: password123
+      POSTGRES_DB: storyspark_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - storyspark-network
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - storyspark-network
+
+  api:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://storyspark:password123@postgres:5432/storyspark_db
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: supersecretkey
+      JWT_REFRESH_SECRET: supersecretrefreshkey
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - storyspark-network
+
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+    ports:
+      - "3001:5173"
+    environment:
+      VITE_API_URL: http://localhost:3000
+    depends_on:
+      - api
+    networks:
+      - storyspark-network
+
+networks:
+  storyspark-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
