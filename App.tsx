@@ -1,229 +1,434 @@
-import React, { useState, useEffect } from 'react';
-import Navbar from './components/Navbar';
-import Sidebar from './components/Sidebar';
-import Rightbar from './components/Rightbar';
-import CreatePostBox from './components/CreatePostBox';
-import PostCard from './components/PostCard';
-import FriendsView from './components/FriendsView';
-import NotificationsView from './components/NotificationsView';
-import ChatView from './components/ChatView';
-import { CURRENT_USER, INITIAL_POSTS, MOCK_FRIENDS } from './constants';
-import { Post } from './types';
-import { generateMockPost } from './services/geminiService';
-import { RefreshCcw, Layout, UserCircle, Bell, MessageSquare, Video, Bookmark, Calendar, Clock, Users, ArrowLeft, Menu } from 'lucide-react';
+import React from 'react';
+import { CheckCircle2, ShieldCheck, Truck, CreditCard, Star, Phone, Mail, MapPin } from 'lucide-react';
 
-// Placeholder View Component
-const SimpleView: React.FC<{ title: string; icon?: React.ReactNode }> = ({ title, icon }) => (
-  <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 flex flex-col items-center justify-center text-center min-h-[400px] animate-fade-in">
-    <div className="w-24 h-24 bg-blue-50 rounded-full flex items-center justify-center mb-6 text-blue-500">
-        {icon || <Layout size={40} />}
-    </div>
-    <h2 className="text-3xl font-bold text-gray-900 mb-3">{title}</h2>
-    <p className="text-gray-500 max-w-md mx-auto text-lg leading-relaxed">
-      This is the <strong>{title}</strong> page. We are currently working on bringing this feature to life. 
-    </p>
-    <button 
-        onClick={() => window.location.hash = '#/'}
-        className="mt-8 px-8 py-3 bg-gray-900 hover:bg-gray-800 text-white font-medium rounded-xl transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
-    >
-        Back to Feed
-    </button>
-  </div>
-);
+const highlights = [
+  {
+    title: 'منتجات أصلية 100%',
+    description: 'نختار أفضل العلامات التجارية بعناية مع ضمانات رسمية لكل منتج.'
+  },
+  {
+    title: 'توصيل سريع ومرن',
+    description: 'شحن خلال 24-48 ساعة داخل المدن وخيارات استلام من الفروع.'
+  },
+  {
+    title: 'دعم متواصل',
+    description: 'فريق دعم عربي متواجد 24/7 لتجربة شراء سلسة.'
+  }
+];
 
-// Placeholder Profile View
-const ProfileView: React.FC<{ userId?: string }> = ({ userId }) => {
-    // Safety check: ensure we don't crash if userId is malformed
-    const safeUserId = userId || CURRENT_USER.id;
-    const user = MOCK_FRIENDS.find(u => u.id === safeUserId) || (safeUserId === CURRENT_USER.id ? CURRENT_USER : null);
-    
-    // Fallback if user not found
-    if (!user) {
-        return <SimpleView title="User Not Found" icon={<Users size={40} />} />;
-    }
+const featuredProducts = [
+  {
+    name: 'حزمة المنزل الذكي',
+    price: '1,299 ر.س',
+    description: 'إضاءة ذكية، حساس حركة، ومساعد صوتي في حزمة واحدة.',
+    tag: 'الأكثر مبيعاً'
+  },
+  {
+    name: 'ساعة رياضية احترافية',
+    price: '899 ر.س',
+    description: 'تتبع فوري للصحة واللياقة مع مقاومة للماء حتى 50م.',
+    tag: 'إصدار جديد'
+  },
+  {
+    name: 'سماعات عزل ضوضاء',
+    price: '649 ر.س',
+    description: 'صوت محيطي مع بطارية تدوم حتى 36 ساعة.',
+    tag: 'خصم 20%'
+  }
+];
 
-    return (
-        <div className="animate-fade-in">
-             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-4">
-                 <div className="h-48 bg-gradient-to-r from-blue-400 to-indigo-500 relative">
-                      <button 
-                        onClick={() => window.location.hash = '#/'}
-                        className="absolute top-4 left-4 p-2 bg-black/20 text-white rounded-full hover:bg-black/40 transition-colors"
-                      >
-                          <ArrowLeft size={24} />
-                      </button>
-                 </div>
-                 <div className="px-6 pb-6 relative">
-                     <div className="absolute -top-16 left-6 border-4 border-white rounded-full">
-                         <img src={user.avatar} alt={user.name} className="w-32 h-32 rounded-full object-cover bg-white" />
-                     </div>
-                     <div className="mt-20 flex justify-between items-end">
-                         <div>
-                             <h1 className="text-2xl font-bold text-gray-900">{user.name}</h1>
-                             <p className="text-gray-500">{user.handle}</p>
-                             <p className="text-sm text-gray-500 mt-1">Software Engineer • {user.status === 'online' ? 'Active Now' : 'Last seen recently'}</p>
-                         </div>
-                         <button className="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors">
-                             Edit Profile
-                         </button>
-                     </div>
-                 </div>
-             </div>
-             <SimpleView title="User Posts & Activity" icon={<Layout size={40} />} />
-        </div>
-    );
-};
+const steps = [
+  {
+    icon: <CreditCard className="h-6 w-6" />,
+    title: 'ادفع بأمان',
+    text: 'وسائل دفع متعددة تشمل مدى، Apple Pay، والدفع عند الاستلام.'
+  },
+  {
+    icon: <Truck className="h-6 w-6" />,
+    title: 'استلم بسرعة',
+    text: 'تتبع لحظي للشحنة وخدمة توصيل مجدولة تناسب وقتك.'
+  },
+  {
+    icon: <ShieldCheck className="h-6 w-6" />,
+    title: 'ضمان واستبدال',
+    text: 'ضمان يصل إلى سنتين مع إمكانية الاستبدال خلال 14 يوماً.'
+  }
+];
+
+const testimonials = [
+  {
+    name: 'ليلى أحمد',
+    role: 'مديرة تسويق',
+    quote: 'تجربة شراء رائعة، وصلت الطلبية في اليوم التالي والتغليف ممتاز.'
+  },
+  {
+    name: 'سلمان العتيبي',
+    role: 'رائد أعمال',
+    quote: 'الخدمة السريعة والدعم الفني المتجاوب جعلوني أعتمدهم دائماً.'
+  },
+  {
+    name: 'نورة الصالح',
+    role: 'مهندسة',
+    quote: 'المنتجات أصلية والأسعار منافسة جداً مقارنةً بالسوق.'
+  }
+];
+
+const faqs = [
+  {
+    question: 'هل يمكنني إرجاع المنتج؟',
+    answer: 'نعم، يمكنك إرجاع المنتج خلال 14 يوماً بشرط الحفاظ على حالته الأصلية.'
+  },
+  {
+    question: 'كم يستغرق الشحن؟',
+    answer: 'داخل المدن الرئيسية من 24 إلى 48 ساعة، وخارجها من 3 إلى 5 أيام.'
+  },
+  {
+    question: 'هل الدفع عند الاستلام متاح؟',
+    answer: 'نعم، متاح في المدن الرئيسية مع رسوم خدمة بسيطة.'
+  }
+];
+
+const stats = [
+  { value: '120K+', label: 'عميل سعيد' },
+  { value: '4.9/5', label: 'تقييم الخدمة' },
+  { value: '350+', label: 'علامة تجارية' },
+  { value: '24/7', label: 'دعم فوري' }
+];
 
 const App: React.FC = () => {
-  const [posts, setPosts] = useState<Post[]>(INITIAL_POSTS);
-  const [route, setRoute] = useState(window.location.hash || '#/');
-
-  // Router Logic
-  useEffect(() => {
-    const handleHashChange = () => {
-      const currentHash = window.location.hash || '#/';
-      setRoute(currentHash);
-      window.scrollTo(0, 0);
-    };
-    
-    // Set initial hash if empty
-    if (!window.location.hash) window.history.replaceState(null, '', '#/');
-    
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
-  }, []);
-
-  const handlePostCreate = (content: string) => {
-    const newPost: Post = {
-      id: Date.now().toString(),
-      author: CURRENT_USER,
-      content,
-      likes: 0,
-      comments: [],
-      shares: 0,
-      timestamp: 'Just now'
-    };
-    setPosts([newPost, ...posts]);
-  };
-
-  const handleLike = (id: string) => {
-      // Logic handled locally in PostCard for UI
-  };
-
-  const handleLoadMore = async () => {
-    const topics = ["Technology", "Hiking", "Food", "Space", "Coding"];
-    const randomTopic = topics[Math.floor(Math.random() * topics.length)];
-    const aiPost = await generateMockPost(randomTopic);
-    
-    const newMockPost: Post = {
-        id: `gen-${Date.now()}`,
-        author: {
-            id: `u-${Date.now()}`,
-            name: 'AI Generated User',
-            handle: '@ai_user',
-            avatar: `https://picsum.photos/150/150?random=${Date.now()}`
-        },
-        content: aiPost.content,
-        likes: Math.floor(Math.random() * 50),
-        comments: [],
-        shares: Math.floor(Math.random() * 10),
-        timestamp: 'Just now',
-        image: Math.random() > 0.5 ? `https://picsum.photos/800/500?random=${Date.now()}` : undefined
-    };
-
-    setPosts(prev => [...prev, newMockPost]);
-  };
-
-  const renderContent = () => {
-      // Basic route parsing
-      let [path, queryString] = route.split('?');
-      const params = new URLSearchParams(queryString);
-      
-      // Robust routing matches
-      if (path.startsWith('#/profile/')) {
-          const userId = path.split('/')[2];
-          return <ProfileView userId={userId} />;
-      }
-      if (path === '#/profile') return <ProfileView userId={CURRENT_USER.id} />;
-      
-      if (path.startsWith('#/groups')) return <SimpleView title="Groups" icon={<UserCircle size={48} />} />;
-      if (path.startsWith('#/saved')) return <SimpleView title="Saved Items" icon={<Bookmark size={48} />} />;
-      if (path.startsWith('#/watch')) return <SimpleView title="Watch" icon={<Video size={48} />} />;
-      if (path.startsWith('#/memories')) return <SimpleView title="Memories" icon={<Clock size={48} />} />;
-      if (path.startsWith('#/events')) return <SimpleView title="Events" icon={<Calendar size={48} />} />;
-      
-      if (path === '#/menu') return <SimpleView title="Menu" icon={<Menu size={48} />} />;
-      if (path === '#/more') return <SimpleView title="More Options" icon={<Layout size={48} />} />;
-
-      switch(path) {
-          case '#/friends': 
-            return <FriendsView />;
-          case '#/messages': 
-            return <ChatView initialUserId={params.get('user') || undefined} />;
-          case '#/notifications': 
-            return <NotificationsView />;
-          case '#/':
-          case '#/home':
-              return (
-                <>
-                    {/* Stories */}
-                    <div className="flex space-x-2 mb-6 overflow-x-auto pb-2 no-scrollbar">
-                        <div className="flex-shrink-0 w-28 h-48 bg-white rounded-xl overflow-hidden relative shadow-sm cursor-pointer group hover:opacity-90 transition-opacity">
-                            <img src={CURRENT_USER.avatar} className="w-full h-3/4 object-cover transition-transform group-hover:scale-105" alt="Story" />
-                            <div className="absolute bottom-0 w-full h-1/4 bg-white flex justify-center items-end pb-2">
-                                <span className="text-xs font-semibold">Create Story</span>
-                            </div>
-                            <div className="absolute top-28 left-1/2 transform -translate-x-1/2 translate-y-1/2 w-8 h-8 bg-blue-500 rounded-full border-4 border-white flex items-center justify-center text-white font-bold text-lg">+</div>
-                        </div>
-                        {[1,2,3,4].map(i => (
-                            <div key={i} className="flex-shrink-0 w-28 h-48 bg-gray-300 rounded-xl overflow-hidden relative cursor-pointer group shadow-sm hover:opacity-90 transition-opacity">
-                                <img src={`https://picsum.photos/200/400?random=${i+50}`} className="w-full h-full object-cover transition-transform group-hover:scale-105 duration-300" alt="Story" />
-                                <div className="absolute top-2 left-2 w-8 h-8 rounded-full border-4 border-blue-500 overflow-hidden">
-                                    <img src={`https://picsum.photos/100/100?random=${i+10}`} className="w-full h-full object-cover" alt="User" />
-                                </div>
-                                <span className="absolute bottom-2 left-2 text-white text-xs font-bold shadow-black drop-shadow-md">User {i}</span>
-                            </div>
-                        ))}
-                    </div>
-
-                    <CreatePostBox currentUser={CURRENT_USER} onPostCreate={handlePostCreate} />
-                    
-                    <div className="space-y-4">
-                        {posts.map(post => (
-                            <PostCard key={post.id} post={post} onLike={handleLike} />
-                        ))}
-                    </div>
-
-                    <div className="mt-8 flex justify-center pb-8">
-                        <button 
-                            onClick={handleLoadMore}
-                            className="flex items-center space-x-2 px-6 py-2 bg-white text-blue-600 font-semibold rounded-full shadow-sm hover:bg-gray-50 transition-colors"
-                        >
-                            <RefreshCcw size={18} />
-                            <span>Load More</span>
-                        </button>
-                    </div>
-                </>
-              );
-          default:
-              // Safe fallback for truly unknown routes
-              return <SimpleView title="Page Not Found" icon={<Layout size={40} />} />;
-      }
-  }
-
   return (
-    <div className="min-h-screen bg-[#f0f2f5] font-sans text-gray-900">
-      <Navbar currentUser={CURRENT_USER} currentRoute={route} />
-      
-      <div className="flex justify-center max-w-[1920px] mx-auto">
-        <Sidebar currentUser={CURRENT_USER} currentRoute={route} />
-        
-        <main className="flex-1 max-w-[700px] w-full p-4 lg:px-8">
-            {renderContent()}
-        </main>
+    <div className="min-h-screen bg-slate-50 text-slate-900" dir="rtl">
+      <header className="bg-white border-b border-slate-200">
+        <div className="max-w-6xl mx-auto px-6 py-4 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center font-bold">
+              س
+            </div>
+            <div>
+              <p className="text-lg font-bold">سوق النخبة</p>
+              <p className="text-sm text-slate-500">تجربة تسوق ذكية وسريعة</p>
+            </div>
+          </div>
+          <nav className="flex flex-wrap items-center gap-4 text-sm font-medium text-slate-600">
+            <a className="hover:text-emerald-600 transition" href="#features">المميزات</a>
+            <a className="hover:text-emerald-600 transition" href="#products">المنتجات</a>
+            <a className="hover:text-emerald-600 transition" href="#pricing">الأسعار</a>
+            <a className="hover:text-emerald-600 transition" href="#contact">التواصل</a>
+            <button className="px-4 py-2 rounded-full bg-emerald-500 text-white hover:bg-emerald-600 transition">
+              ابدأ الآن
+            </button>
+          </nav>
+        </div>
+      </header>
 
-        <Rightbar />
-      </div>
+      <section className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-l from-emerald-100 via-white to-white" />
+        <div className="relative max-w-6xl mx-auto px-6 py-16 lg:py-24 grid lg:grid-cols-2 gap-12 items-center">
+          <div>
+            <span className="inline-flex items-center gap-2 text-emerald-600 bg-emerald-50 px-4 py-2 rounded-full text-sm font-semibold">
+              <CheckCircle2 className="h-4 w-4" /> عروض الصيف وصلت الآن
+            </span>
+            <h1 className="mt-6 text-4xl lg:text-5xl font-extrabold leading-tight text-slate-900">
+              ابنِ تجربة تسوق متكاملة لعملائك مع منصة مبيعات عصرية.
+            </h1>
+            <p className="mt-6 text-lg text-slate-600 leading-relaxed">
+              نوفر لك متجر إلكتروني جاهز للبيع مع إدارة مخزون ذكية، حملات تسويقية، وخدمة توصيل سريعة تمنح عملاءك تجربة مميزة.
+            </p>
+            <div className="mt-8 flex flex-col sm:flex-row gap-4">
+              <button className="px-6 py-3 rounded-full bg-emerald-500 text-white font-semibold hover:bg-emerald-600 transition">
+                أنشئ متجرك الآن
+              </button>
+              <button className="px-6 py-3 rounded-full border border-slate-300 text-slate-700 hover:border-emerald-500 hover:text-emerald-600 transition">
+                احصل على استشارة مجانية
+              </button>
+            </div>
+            <div className="mt-10 grid grid-cols-2 sm:grid-cols-4 gap-6">
+              {stats.map((stat) => (
+                <div key={stat.label} className="text-center sm:text-right">
+                  <p className="text-2xl font-bold text-slate-900">{stat.value}</p>
+                  <p className="text-sm text-slate-500">{stat.label}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="bg-white shadow-xl rounded-3xl p-8 border border-slate-100">
+            <p className="text-sm text-slate-500">لوحة المبيعات اليوم</p>
+            <p className="text-3xl font-bold mt-2">78,420 ر.س</p>
+            <div className="mt-6 space-y-4">
+              {highlights.map((item) => (
+                <div key={item.title} className="flex items-start gap-4">
+                  <div className="h-10 w-10 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center">
+                    <CheckCircle2 className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-slate-900">{item.title}</p>
+                    <p className="text-sm text-slate-500">{item.description}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="mt-8 rounded-2xl bg-slate-900 text-white p-6">
+              <div className="flex items-center justify-between">
+                <p className="font-semibold">حالة الطلبات</p>
+                <span className="text-emerald-300 text-sm">مباشر</span>
+              </div>
+              <div className="mt-4 space-y-3 text-sm">
+                <div className="flex items-center justify-between">
+                  <span>قيد التحضير</span>
+                  <strong>142</strong>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>في الطريق</span>
+                  <strong>86</strong>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>تم التسليم</span>
+                  <strong>1,240</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="features" className="max-w-6xl mx-auto px-6 py-16">
+        <div className="text-center max-w-2xl mx-auto">
+          <p className="text-emerald-600 font-semibold">مميزات المنصة</p>
+          <h2 className="text-3xl font-bold mt-3">حل متكامل لإدارة المبيعات والنمو</h2>
+          <p className="text-slate-600 mt-4">
+            وفرنا لك كل ما تحتاجه لتوسيع نشاطك التجاري، من إدارة المخزون إلى دعم العملاء والتحليلات المتقدمة.
+          </p>
+        </div>
+        <div className="mt-10 grid md:grid-cols-3 gap-6">
+          {steps.map((step) => (
+            <div key={step.title} className="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm">
+              <div className="h-12 w-12 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                {step.icon}
+              </div>
+              <h3 className="mt-4 font-semibold text-lg">{step.title}</h3>
+              <p className="mt-2 text-sm text-slate-500">{step.text}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section id="products" className="bg-white border-t border-b border-slate-100">
+        <div className="max-w-6xl mx-auto px-6 py-16">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+            <div>
+              <p className="text-emerald-600 font-semibold">منتجات مختارة</p>
+              <h2 className="text-3xl font-bold mt-3">أفضل المنتجات لزيادة مبيعاتك</h2>
+              <p className="text-slate-600 mt-4">
+                اخترنا لك منتجات جاهزة للإطلاق مع صور تسويقية ووصف احترافي.
+              </p>
+            </div>
+            <button className="px-5 py-3 rounded-full border border-slate-200 text-slate-700 hover:border-emerald-500 hover:text-emerald-600 transition">
+              استعرض الكتالوج الكامل
+            </button>
+          </div>
+          <div className="mt-10 grid md:grid-cols-3 gap-6">
+            {featuredProducts.map((product) => (
+              <div key={product.name} className="rounded-2xl border border-slate-100 p-6 shadow-sm">
+                <span className="text-xs bg-emerald-50 text-emerald-600 px-3 py-1 rounded-full font-semibold">
+                  {product.tag}
+                </span>
+                <h3 className="mt-4 text-lg font-semibold">{product.name}</h3>
+                <p className="text-sm text-slate-500 mt-2">{product.description}</p>
+                <div className="mt-6 flex items-center justify-between">
+                  <span className="text-xl font-bold text-slate-900">{product.price}</span>
+                  <button className="text-sm font-semibold text-emerald-600">أضف للسلة</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="pricing" className="max-w-6xl mx-auto px-6 py-16">
+        <div className="text-center max-w-2xl mx-auto">
+          <p className="text-emerald-600 font-semibold">خطط الأسعار</p>
+          <h2 className="text-3xl font-bold mt-3">خطط مرنة تناسب كل متجر</h2>
+          <p className="text-slate-600 mt-4">
+            اختر الخطة المناسبة لحجم مبيعاتك مع إمكانية الترقية في أي وقت.
+          </p>
+        </div>
+        <div className="mt-10 grid md:grid-cols-3 gap-6">
+          {[
+            {
+              name: 'انطلاق',
+              price: '249 ر.س/شهر',
+              features: ['عدد منتجات غير محدود', 'تقارير أسبوعية', 'دعم بريد إلكتروني']
+            },
+            {
+              name: 'نمو',
+              price: '499 ر.س/شهر',
+              features: ['لوحة تحكم متقدمة', 'حملات تسويقية', 'دعم فوري عبر الدردشة'],
+              featured: true
+            },
+            {
+              name: 'احترافي',
+              price: '899 ر.س/شهر',
+              features: ['مدير حساب مخصص', 'تكاملات ERP', 'تقارير فورية 24/7']
+            }
+          ].map((plan) => (
+            <div
+              key={plan.name}
+              className={`rounded-2xl border p-6 shadow-sm ${
+                plan.featured
+                  ? 'border-emerald-500 bg-emerald-50'
+                  : 'border-slate-100 bg-white'
+              }`}
+            >
+              <h3 className="text-lg font-semibold">{plan.name}</h3>
+              <p className="mt-2 text-2xl font-bold">{plan.price}</p>
+              <ul className="mt-6 space-y-3 text-sm text-slate-600">
+                {plan.features.map((feature) => (
+                  <li key={feature} className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                    {feature}
+                  </li>
+                ))}
+              </ul>
+              <button className="mt-6 w-full py-2 rounded-full bg-slate-900 text-white hover:bg-slate-800 transition">
+                اختر الخطة
+              </button>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="bg-slate-900 text-white">
+        <div className="max-w-6xl mx-auto px-6 py-16 grid md:grid-cols-2 gap-10 items-center">
+          <div>
+            <p className="text-emerald-300 font-semibold">قصص نجاح</p>
+            <h2 className="text-3xl font-bold mt-3">شركاؤنا حققوا نمواً ملحوظاً</h2>
+            <p className="text-slate-300 mt-4">
+              اعتمدت أكثر من 120 ألف علامة على منصتنا لزيادة مبيعاتها وتحسين تجربة العملاء.
+            </p>
+          </div>
+          <div className="space-y-6">
+            {testimonials.map((item) => (
+              <div key={item.name} className="bg-slate-800 rounded-2xl p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-semibold">{item.name}</p>
+                    <p className="text-sm text-slate-400">{item.role}</p>
+                  </div>
+                  <div className="flex gap-1 text-amber-400">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Star key={star} className="h-4 w-4" />
+                    ))}
+                  </div>
+                </div>
+                <p className="mt-4 text-slate-300">{item.quote}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="max-w-6xl mx-auto px-6 py-16">
+        <div className="grid md:grid-cols-2 gap-10">
+          <div>
+            <p className="text-emerald-600 font-semibold">الأسئلة الشائعة</p>
+            <h2 className="text-3xl font-bold mt-3">نحن هنا لمساعدتك دائماً</h2>
+            <p className="text-slate-600 mt-4">
+              إجابات مباشرة لأكثر الأسئلة التي تردنا من أصحاب المتاجر والعملاء.
+            </p>
+          </div>
+          <div className="space-y-6">
+            {faqs.map((faq) => (
+              <div key={faq.question} className="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm">
+                <h3 className="font-semibold text-slate-900">{faq.question}</h3>
+                <p className="text-sm text-slate-500 mt-2">{faq.answer}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="contact" className="bg-emerald-600 text-white">
+        <div className="max-w-6xl mx-auto px-6 py-16 grid lg:grid-cols-2 gap-10">
+          <div>
+            <h2 className="text-3xl font-bold">تواصل مع فريق المبيعات</h2>
+            <p className="mt-4 text-emerald-100">
+              أخبرنا عن متجرك وسنساعدك في اختيار الخطة المناسبة وتحقيق أعلى المبيعات.
+            </p>
+            <div className="mt-6 space-y-4 text-sm">
+              <div className="flex items-center gap-3">
+                <Phone className="h-5 w-5" />
+                <span>9200 12345</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <Mail className="h-5 w-5" />
+                <span>sales@elite-market.sa</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <MapPin className="h-5 w-5" />
+                <span>الرياض - حي الصحافة</span>
+              </div>
+            </div>
+          </div>
+          <form className="bg-white text-slate-900 rounded-3xl p-6 space-y-4">
+            <div>
+              <label className="text-sm font-semibold">الاسم الكامل</label>
+              <input
+                className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                placeholder="اكتب اسمك"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-semibold">البريد الإلكتروني</label>
+              <input
+                className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                placeholder="example@email.com"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-semibold">نبذة عن مشروعك</label>
+              <textarea
+                className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                rows={4}
+                placeholder="صف احتياجاتك بإيجاز"
+              />
+            </div>
+            <button className="w-full py-3 rounded-full bg-emerald-600 text-white font-semibold hover:bg-emerald-700 transition">
+              أرسل الطلب
+            </button>
+          </form>
+        </div>
+      </section>
+
+      <footer className="bg-white border-t border-slate-200">
+        <div className="max-w-6xl mx-auto px-6 py-10 grid md:grid-cols-3 gap-6">
+          <div>
+            <p className="text-lg font-bold">سوق النخبة</p>
+            <p className="text-sm text-slate-500 mt-2">
+              منصة مبيعات متكاملة تساعدك على إطلاق متجرك بسرعة وتحقيق نمو مستدام.
+            </p>
+          </div>
+          <div className="text-sm text-slate-600 space-y-2">
+            <p className="font-semibold text-slate-900">روابط سريعة</p>
+            <p>عن المنصة</p>
+            <p>الشحن والاسترجاع</p>
+            <p>الأسئلة الشائعة</p>
+          </div>
+          <div className="text-sm text-slate-600 space-y-2">
+            <p className="font-semibold text-slate-900">اشترك في النشرة</p>
+            <p>احصل على عروض وخصومات حصرية أسبوعياً.</p>
+            <div className="flex gap-2">
+              <input
+                className="flex-1 rounded-full border border-slate-200 px-4 py-2"
+                placeholder="بريدك الإلكتروني"
+              />
+              <button className="px-4 py-2 rounded-full bg-slate-900 text-white">اشتراك</button>
+            </div>
+          </div>
+        </div>
+        <div className="border-t border-slate-100 text-center text-xs text-slate-400 py-4">
+          جميع الحقوق محفوظة © 2024 سوق النخبة
+        </div>
+      </footer>
     </div>
   );
 };
